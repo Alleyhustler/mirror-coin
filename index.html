@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mirror Coin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            overflow-x: hidden;
+            font-weight: 300;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .mirror-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1), transparent);
+            z-index: 1000;
+            transition: all 0.4s ease;
+        }
+
+        .left-side, .right-side {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100vh;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.320, 1);
+        }
+
+        .left-side {
+            left: 0;
+            background: linear-gradient(135deg, #000 0%, #0a0a0a 100%);
+        }
+
+        .right-side {
+            right: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+            transform: scaleX(-1);
+        }
+
+        .content {
+            padding: 4rem 3rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6rem;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 6vw, 7rem);
+            font-weight: 100;
+            line-height: 0.9;
+            margin-bottom: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: #888;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            max-width: 400px;
+        }
+
+        .cta-button {
+            background: transparent;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 1rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: fit-content;
+            font-family: inherit;
+        }
+
+        .cta-button:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .cta-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .wallet-status {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .wallet-connected {
+            color: #4ade80;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .stat-item {
+            border-top: 1px solid #222;
+            padding-top: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 200;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tokenomics {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 3rem;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #111;
+        }
+
+        .tokenomics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tokenomics-item {
+            text-align: center;
+        }
+
+        .tokenomics-value {
+            font-size: 1.8rem;
+            font-weight: 200;
+            margin-bottom: 0.5rem;
+        }
+
+        .tokenomics-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .mirror-control {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 2000;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            padding: 0.8rem 1.5rem;
+            font-size: 0.8rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-family: inherit;
+        }
+
+        .mirror-control:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .community {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 2000;
+        }
+
+        .community-link {
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #888;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .community-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .reflection-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #666;
+            letter-spacing: 0.1em;
+            z-index: 1500;
+            backdrop-filter: blur(5px);
+        }
+
+        .coin-logo {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .reflection-indicator:hover {
+            border-color: #666;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        }
+
+        .reflection-indicator:hover .coin-logo {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .flipped {
+            transform: scaleX(-1);
+        }
+
+        .distorted {
+            filter: blur(0.5px) brightness(0.7);
+            opacity: 0.8;
+        }
+
+        .crack-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,0 L52,100 M0,50 L100,48 M20,20 L80,82 M80,20 L18,80" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/></svg>');
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1001;
+        }
+
+        .crack-effect.active {
+            opacity: 1;
+        }
+
+        .right-side .hero-title {
+            transform: scaleX(-1);
+        }
+
+        .right-side .hero-subtitle {
+            transform: scaleX(-1);
+        }
+
+        .right-side .cta-button {
+            transform: scaleX(-1);
+        }
+
+        .right-side .stats {
+            transform: scaleX(-1);
+        }
+
+        /* Sections */
+        .section {
+            min-height: 100vh;
+            padding: 4rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            color: #fff;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 100;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .section-content {
+            max-width: 800px;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .about-item {
+            background: rgba(255,255,255,0.05);
+            padding: 2rem;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+        }
+
+        .about-item h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .tokenomics-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tokenomics-card {
+            background: rgba(255,255,255,0.05);
+            padding: 2rem;
+            border: 1px solid #333;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .tokenomics-card h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .community-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .community-card {
+            background: rgba(255,255,255,0.05);
+            padding: 2rem;
+            border: 1px solid #333;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            color: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .community-card:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .left-side, .right-side {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            
+            .right-side {
+                transform: none;
+                display: none;
+            }
+            
+            .mirror-line {
+                display: none;
+            }
+            
+            .tokenomics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+            
+            .reflection-indicator {
+                display: none;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .slide-up {
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideUp 0.8s ease forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mirror-line"></div>
+        <div class="crack-effect" id="cracks"></div>
+        
+        <div class="left-side">
+            <div class="content">
+                <nav class="nav fade-in">
+                    <div class="logo">THE MIRROR COIN</div>
+                    <div class="nav-links">
+                        <a href="#about">About</a>
+                        <a href="#tokenomics">Tokenomics</a>
+                        <a href="#community">Community</a>
+                    </div>
+                </nav>
+                
+                <div class="hero">
+                    <h1 class="hero-title slide-up">REALITY<br>DISTORTED</h1>
+                    <p class="hero-subtitle slide-up">A reflection of value. A distortion of truth. The mirror reveals what the market hides.</p>
+                    <button class="cta-button slide-up" id="connectBtn" onclick="connectWallet()">CONNECT WALLET</button>
+                    <div class="wallet-status" id="walletStatus">Phantom wallet not detected</div>
+                    
+                    <div class="stats slide-up">
+                        <div class="stat-item">
+                            <div class="stat-value">1B</div>
+                            <div class="stat-label">Total Supply</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">0%</div>
+                            <div class="stat-label">Tax</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-side" id="rightSide">
+            <div class="content">
+                <nav class="nav fade-in">
+                    <div class="logo">NIOC RORRIM EHT</div>
+                    <div class="nav-links">
+                        <a href="#about">tuobA</a>
+                        <a href="#tokenomics">scimoneko T</a>
+                        <a href="#community">ytinummoC</a>
+                    </div>
+                </nav>
+                
+                <div class="hero">
+                    <h1 class="hero-title slide-up">YTILAE R<br>DETROTSID</h1>
+                    <p class="hero-subtitle slide-up">eulav fo noitcelfer A .hturT fo noitrotsid A .sedih tekram eht tahw slaever rorrim ehT</p>
+                    <button class="cta-button slide-up" onclick="connectWallet()">TELLAW TCENNOC</button>
+                    
+                    <div class="stats slide-up">
+                        <div class="stat-item">
+                            <div class="stat-value">B1</div>
+                            <div class="stat-label">ylppuS latoT</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">%0</div>
+                            <div class="stat-label">xaT</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tokenomics">
+            <div class="tokenomics-grid">
+                <div class="tokenomics-item">
+                    <div class="tokenomics-value">80%</div>
+                    <div class="tokenomics-label">Liquidity</div>
+                </div>
+                <div class="tokenomics-item">
+                    <div class="tokenomics-value">10%</div>
+                    <div class="tokenomics-label">Team</div>
+                </div>
+                <div class="tokenomics-item">
+                    <div class="tokenomics-value">10%</div>
+                    <div class="tokenomics-label">Marketing</div>
+                </div>
+                <div class="tokenomics-item">
+                    <div class="tokenomics-value">0%</div>
+                    <div class="tokenomics-label">Tax</div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="mirror-control" onclick="toggleMirror()">MIRROR STATE</button>
+        
+        <div class="community">
+            <a href="https://x.com/Themirrorcoin" class="community-link">𝕏</a>
+        </div>
+        
+        <div class="reflection-indicator" onclick="breakMirror()">
+            <img src="Progetto senza titolo (1).png" alt="Mirror Coin Logo" class="coin-logo">
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <div id="about" class="section">
+        <h2 class="section-title">ABOUT THE MIRROR</h2>
+        <div class="section-content">
+            <p>The Mirror Coin represents the duality of perception in the crypto market. Every reflection reveals another truth, every distortion hides another lie.</p>
+            <div class="about-grid">
+                <div class="about-item">
+                    <h3>Reality Distortion</h3>
+                    <p>Our token challenges the conventional understanding of value by creating a mirror economy where perceptions become reality.</p>
+                </div>
+                <div class="about-item">
+                    <h3>Dual Nature</h3>
+                    <p>Every transaction exists in two states simultaneously - what you see and what the market reflects back.</p>
+                </div>
+                <div class="about-item">
+                    <h3>Community Driven</h3>
+                    <p>The mirror only shows what the community believes. Together, we shape the reflection of value.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tokenomics Section -->
+    <div id="tokenomics" class="section">
+        <h2 class="section-title">TOKENOMICS</h2>
+        <div class="section-content">
+            <p>A perfectly balanced distribution that reflects our commitment to fairness and transparency.</p>
+            <div class="tokenomics-detail">
+                <div class="tokenomics-card">
+                    <h3>80%</h3>
+                    <p>Liquidity Pool</p>
+                    <small>Locked and burned forever</small>
+                </div>
+                <div class="tokenomics-card">
+                    <h3>10%</h3>
+                    <p>Team Allocation</p>
+                    <small>Vested over 24 months</small>
+                </div>
+                <div class="tokenomics-card">
+                    <h3>10%</h3>
+                    <p>Marketing & Development</p>
+                    <small>Community growth focused</small>
+                </div>
+                <div class="tokenomics-card">
+                    <h3>0%</h3>
+                    <p>Transaction Tax</p>
+                    <small>Pure and simple trading</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Community Section -->
+    <div id="community" class="section">
+        <h2 class="section-title">COMMUNITY</h2>
+        <div class="section-content">
+            <p>Join the reflection. Become part of the distortion. Shape the future of decentralized perception.</p>
+            <div class="community-grid">
+                <a href="https://x.com/Themirrorcoin" class="community-card">
+                    <h3>𝕏</h3>
+                    <p>Follow our journey</p>
+                </a>
+                <a href="https://x.com/Themirrorcoin" class="community-card">
+                    <h3>💬</h3>
+                    <p>CA</p>
+                </a>
+                <a href="#" class="community-card">
+                    <h3>🌐</h3>
+                    <p>Website</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isMirrored = false;
+        let isBroken = false;
+        let walletConnected = false;
+        let walletAddress = null;
+        
+        // Check if Phantom wallet is installed
+        function checkPhantomWallet() {
+            if (window.solana && window.solana.isPhantom) {
+                document.getElementById('walletStatus').textContent = 'Phantom wallet detected';
+                return true;
+            } else {
+                document.getElementById('walletStatus').textContent = 'Please install Phantom wallet';
+                return false;
+            }
+        }
+        
+        // Connect to Phantom wallet
+        async function connectWallet() {
+            const connectBtn = document.getElementById('connectBtn');
+            const walletStatus = document.getElementById('walletStatus');
+            
+            if (!checkPhantomWallet()) {
+                window.open('https://phantom.app/', '_blank');
+                return;
+            }
+            
+            try {
+                connectBtn.disabled = true;
+                connectBtn.textContent = 'CONNECTING...';
+                walletStatus.textContent = 'Connecting to Phantom...';
+                
+                const response = await window.solana.connect();
+                walletAddress = response.publicKey.toString();
+                walletConnected = true;
+                
+                connectBtn.textContent = 'WALLET CONNECTED';
+                connectBtn.style.background = '#4ade80';
+                connectBtn.style.color = '#000';
+                connectBtn.style.borderColor = '#4ade80';
+                
+                walletStatus.textContent = `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                walletStatus.classList.add('wallet-connected');
+                
+                console.log('Connected to wallet:', walletAddress);
+                
+            } catch (error) {
+                console.error('Error connecting to wallet:', error);
+                connectBtn.disabled = false;
+                connectBtn.textContent = 'CONNECT WALLET';
+                
+                if (error.code === 4001) {
+                    walletStatus.textContent = 'Connection rejected by user';
+                } else {
+                    walletStatus.textContent = 'Connection failed. Please try again.';
+                }
+            }
+        }
+        
+        // Disconnect wallet
+        async function disconnectWallet() {
+            if (walletConnected && window.solana) {
+                try {
+                    await window.solana.disconnect();
+                    walletConnected = false;
+                    walletAddress = null;
+                    
+                    const connectBtn = document.getElementById('connectBtn');
+                    const walletStatus = document.getElementById('walletStatus');
+                    
+                    connectBtn.textContent = 'CONNECT WALLET';
+                    connectBtn.style.background = 'transparent';
+                    connectBtn.style.color = '#fff';
+                    connectBtn.style.borderColor = '#333';
+                    connectBtn.disabled = false;
+                    
+                    walletStatus.textContent = 'Wallet disconnected';
+                    walletStatus.classList.remove('wallet-connected');
+                    
+                } catch (error) {
+                    console.error('Error disconnecting wallet:', error);
+                }
+            }
+        }
+        
+        // Check wallet connection on page load
+        window.addEventListener('load', async () => {
+            if (checkPhantomWallet()) {
+                try {
+                    // Check if already connected
+                    const response = await window.solana.connect({ onlyIfTrusted: true });
+                    if (response.publicKey) {
+                        walletAddress = response.publicKey.toString();
+                        walletConnected = true;
+                        
+                        const connectBtn = document.getElementById('connectBtn');
+                        const walletStatus = document.getElementById('walletStatus');
+                        
+                        connectBtn.textContent = 'WALLET CONNECTED';
+                        connectBtn.style.background = '#4ade80';
+                        connectBtn.style.color = '#000';
+                        connectBtn.style.borderColor = '#4ade80';
+                        
+                        walletStatus.textContent = `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                        walletStatus.classList.add('wallet-connected');
+                        
+                        // Change button to disconnect functionality
+                        connectBtn.onclick = disconnectWallet;
+                        connectBtn.textContent = 'DISCONNECT';
+                    }
+                } catch (error) {
+                    // User hasn't connected before, that's fine
+                }
+            }
+        });
+        
+        function toggleMirror() {
+            const rightSide = document.getElementById('rightSide');
+            const cracks = document.getElementById('cracks');
+            
+            isMirrored = !isMirrored;
+            
+            if (isMirrored) {
+                rightSide.style.opacity = '1';
+                rightSide.style.transform = 'scaleX(1)';
+                cracks.classList.add('active');
+            } else {
+                rightSide.style.opacity = '0.3';
+                rightSide.style.transform = 'scaleX(-1)';
+                cracks.classList.remove('active');
+            }
+        }
+        
+        function breakMirror() {
+            const indicator = document.querySelector('.reflection-indicator');
+            const mirrorLine = document.querySelector('.mirror-line');
+            const cracks = document.getElementById('cracks');
+            
+            if (!isBroken) {
+                indicator.style.transform = 'translate(-50%, -50%) scale(2)';
+                indicator.style.opacity = '0';
+                mirrorLine.style.background = 'linear-gradient(to bottom, transparent, rgba(255,0,0,0.3), transparent)';
+                cracks.classList.add('active');
+                
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                    mirrorLine.style.width = '3px';
+                    mirrorLine.style.background = 'rgba(255,0,0,0.5)';
+                }, 300);
+                
+                isBroken = true;
+            }
+        }
+        
+        // Subtle parallax effect
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX - window.innerWidth / 2) * 0.005;
+            const y = (e.clientY - window.innerHeight / 2) * 0.005;
+            
+            document.querySelector('.left-side').style.transform = `translate(${x}px, ${y}px)`;
+            document.querySelector('.right-side').style.transform = `scaleX(-1) translate(${-x}px, ${-y}px)`;
+        });
+        
+        // Smooth scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = '0.2s';
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.slide-up').forEach(el => {
+            observer.observe(el);
+        });
+        
+        // Handle wallet account changes
+        if (window.solana) {
+            window.solana.on('accountChanged', (publicKey) => {
+                if (publicKey) {
+                    walletAddress = publicKey.toString();
+                    document.getElementById('walletStatus').textContent = `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                } else {
+                    disconnectWallet();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
